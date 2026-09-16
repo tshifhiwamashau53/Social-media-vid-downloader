@@ -1,4 +1,4 @@
-const API_URL = "/api/download";
+const API_URL = "https://media-drop-p8ajsfbah-tshifhiwamashau53-4996.vercel.app/api/download";
 
 const form = document.getElementById("downloadForm");
 const urlInput = document.getElementById("url");
