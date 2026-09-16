@@ -1,65 +1,72 @@
 export default async function handler(req, res) {
-  // Accept both methods so the endpoint is easy to test and works across
-  // static/frontend deployments that may probe the API with GET first.
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
+
+  if (req.method === "OPTIONS") return res.status(204).end();
+
   if (req.method !== "POST" && req.method !== "GET") {
-    return res.status(405).json({
-      error: "Method not allowed. Use POST or GET with a media URL."
-    });
+    return res.status(405).json({ error: "Method not allowed. Use POST or GET." });
+  }
+
+  const url = req.method === "GET" ? req.query?.url : req.body?.url;
+
+  if (!url || typeof url !== "string") {
+    return res.status(400).json({ error: "A media URL is required." });
   }
 
   try {
-    const url = req.method === "GET"
-      ? req.query?.url
-      : req.body?.url;
-
-    if (!url || typeof url !== "string") {
-      return res.status(400).json({ error: "A media URL is required." });
-    }
-
-    let parsed;
-    try {
-      parsed = new URL(url);
-    } catch {
-      return res.status(400).json({ error: "Invalid URL." });
-    }
-
+    const parsed = new URL(url);
     if (!["http:", "https:"].includes(parsed.protocol)) {
       return res.status(400).json({ error: "Only HTTP and HTTPS links are supported." });
     }
+  } catch {
+    return res.status(400).json({ error: "Invalid URL." });
+  }
 
-    const upstream = await fetch("https://api.cobalt.tools/api/json", {
+  const apiUrl = process.env.COBALT_API_URL || "https://api.cobalt.tools/api/json";
+  const apiKey = process.env.COBALT_API_KEY;
+
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "User-Agent": "MediaDrop/1.0"
+  };
+
+  if (apiKey) headers.Authorization = `Api-Key ${apiKey}`;
+
+  try {
+    const upstream = await fetch(apiUrl, {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": "MediaDrop/1.0"
-      },
+      headers,
       body: JSON.stringify({
         url,
         videoQuality: "max",
-        videoCodec: "h264",
         audioFormat: "best",
         filenameStyle: "basic",
-        downloadMode: "auto"
+        downloadMode: "auto",
+        youtubeVideoCodec: "h264"
       })
     });
 
-    const contentType = upstream.headers.get("content-type") || "";
     const raw = await upstream.text();
-    let data = null;
-
-    if (contentType.includes("application/json")) {
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        data = null;
-      }
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      data = null;
     }
 
-    if (!upstream.ok || !data) {
+    if (!upstream.ok) {
+      console.error("cobalt-upstream", upstream.status, raw.slice(0, 500));
       return res.status(502).json({
-        error: `Media processor returned HTTP ${upstream.status}.`
+        error: `Media processor returned HTTP ${upstream.status}.`,
+        details: raw.slice(0, 300)
       });
+    }
+
+    if (!data) {
+      return res.status(502).json({ error: "Media processor returned an invalid response." });
     }
 
     if (data.status === "error") {
