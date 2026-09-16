@@ -1,4 +1,4 @@
-const API_URL = "https://api.cobalt.tools/api/json";
+const API_URL = "/api/download";
 
 const form = document.getElementById("downloadForm");
 const urlInput = document.getElementById("url");
@@ -16,7 +16,6 @@ function showError(message) {
   result.innerHTML = "";
   const box = document.createElement("div");
   box.className = "error-box";
-  box.innerHTML = "";
   const title = document.createElement("strong");
   title.textContent = "Could not prepare this media";
   const text = document.createElement("p");
@@ -116,16 +115,6 @@ form.addEventListener("submit", async (event) => {
   result.classList.add("hidden");
   setStatus("Preparing the highest available quality…");
 
-  const body = {
-    url,
-    videoQuality: "max",
-    downloadMode: "auto",
-    audioFormat: "best",
-    youtubeVideoCodec: "h264",
-    youtubeVideoContainer: "mp4",
-    filenameStyle: "basic"
-  };
-
   try {
     const response = await fetch(API_URL, {
       method: "POST",
@@ -133,23 +122,23 @@ form.addEventListener("submit", async (event) => {
         Accept: "application/json",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify({ url })
     });
 
     const contentType = response.headers.get("content-type") || "";
     const data = contentType.includes("application/json")
       ? await response.json()
-      : { status: "error", error: { code: `Service returned HTTP ${response.status} instead of JSON.` } };
+      : { error: `Backend returned HTTP ${response.status}.` };
 
-    if (!response.ok || data.status === "error") {
-      throw new Error(data.error?.code || `Request failed (HTTP ${response.status})`);
+    if (!response.ok || data.status === "error" || data.error) {
+      throw new Error(data.error?.code || data.error || `Request failed (HTTP ${response.status})`);
     }
 
     showResult(data);
     setStatus("Video ready. Preview it before downloading.", "success");
   } catch (error) {
     console.error(error);
-    setStatus("The processing service rejected this request.", "error");
+    setStatus("The downloader could not process this link.", "error");
     showError(error?.message || "Unknown downloader error.");
   } finally {
     button.disabled = false;
