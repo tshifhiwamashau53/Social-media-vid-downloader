@@ -11,6 +11,15 @@ function setStatus(message, type = "") {
   status.className = `status ${type}`;
 }
 
+function showError(message) {
+  result.classList.remove("hidden");
+  result.innerHTML = "";
+  const box = document.createElement("div");
+  box.className = "error-box";
+  box.innerHTML = `<strong>Could not prepare this video</strong><p>${message}</p><small>This downloader only works with public media that the processing service supports.</small>`;
+  result.appendChild(box);
+}
+
 function addVideoPreview(url, filename = "") {
   const preview = document.createElement("div");
   preview.className = "preview-box";
@@ -27,6 +36,9 @@ function addVideoPreview(url, filename = "") {
   video.preload = "metadata";
   video.src = url;
   video.setAttribute("aria-label", "Downloaded media preview");
+  video.addEventListener("error", () => {
+    setStatus("The media URL was returned, but the browser could not play it.", "error");
+  });
   preview.appendChild(video);
 
   if (filename) {
@@ -43,6 +55,8 @@ function addDownloadButton(url, filename = "media") {
   const link = document.createElement("a");
   link.className = "primary-link";
   link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
   link.download = filename || "media";
   link.textContent = "Download highest quality";
   result.appendChild(link);
@@ -53,33 +67,29 @@ function showResult(data) {
   result.innerHTML = "";
 
   if (data.status === "picker" && Array.isArray(data.picker)) {
-    const videoItem = data.picker.find(item => item.url && /video/i.test(item.type || ""));
-    const item = videoItem || data.picker.find(item => item.url);
-
-    if (!item) throw new Error("No downloadable media was returned.");
+    const item = data.picker.find(item => item.url && /video/i.test(item.type || "")) || data.picker.find(item => item.url);
+    if (!item) throw new Error("No downloadable video was returned.");
 
     const heading = document.createElement("h2");
     heading.textContent = "Preview your video";
     result.appendChild(heading);
-
     addVideoPreview(item.url, item.filename || "");
     addDownloadButton(item.url, item.filename || "media.mp4");
     return;
   }
 
-  if (data.status === "redirect" || data.status === "tunnel" || data.status === "local-processing") {
-    if (!data.url) throw new Error("The downloader returned no media URL.");
+  if (["redirect", "tunnel", "local-processing"].includes(data.status)) {
+    if (!data.url) throw new Error("The processing service returned no media URL.");
 
     const heading = document.createElement("h2");
     heading.textContent = "Preview your video";
     result.appendChild(heading);
-
     addVideoPreview(data.url, data.filename || "");
     addDownloadButton(data.url, data.filename || "media.mp4");
     return;
   }
 
-  throw new Error(data.error?.code || "The downloader could not process this link.");
+  throw new Error(data.error?.code || "Unsupported or unavailable public media link.");
 }
 
 form.addEventListener("submit", async (event) => {
@@ -103,7 +113,7 @@ form.addEventListener("submit", async (event) => {
     url,
     videoQuality: "max",
     downloadMode: "auto",
-    audioFormat: "mp3",
+    audioFormat: "best",
     youtubeVideoCodec: "h264",
     youtubeVideoContainer: "mp4",
     filenameStyle: "basic"
@@ -119,7 +129,10 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify(body)
     });
 
-    const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    const data = contentType.includes("application/json")
+      ? await response.json()
+      : { status: "error", error: { code: `Service returned ${response.status} instead of JSON.` } };
 
     if (!response.ok || data.status === "error") {
       throw new Error(data.error?.code || `Request failed (${response.status})`);
@@ -128,14 +141,9 @@ form.addEventListener("submit", async (event) => {
     showResult(data);
     setStatus("Video ready. Preview it before downloading.", "success");
   } catch (error) {
-    const reason = error?.message || "Unknown downloader error";
-    setStatus("The downloader service could not process that link.", "error");
-    result.classList.remove("hidden");
-    result.innerHTML = "";
-
-    const message = document.createElement("p");
-    message.textContent = `Reason: ${reason}`;
-    result.appendChild(message);
+    console.error(error);
+    setStatus("The processing service rejected this request.", "error");
+    showError(error?.message || "Unknown downloader error.");
   } finally {
     button.disabled = false;
   }
