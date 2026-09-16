@@ -1,10 +1,16 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  // Accept both methods so the endpoint is easy to test and works across
+  // static/frontend deployments that may probe the API with GET first.
+  if (req.method !== "POST" && req.method !== "GET") {
+    return res.status(405).json({
+      error: "Method not allowed. Use POST or GET with a media URL."
+    });
   }
 
   try {
-    const { url } = req.body || {};
+    const url = req.method === "GET"
+      ? req.query?.url
+      : req.body?.url;
 
     if (!url || typeof url !== "string") {
       return res.status(400).json({ error: "A media URL is required." });
@@ -21,7 +27,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Only HTTP and HTTPS links are supported." });
     }
 
-    const response = await fetch("https://api.cobalt.tools/api/json", {
+    const upstream = await fetch("https://api.cobalt.tools/api/json", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -30,22 +36,29 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         url,
-        vQuality: "max",
-        vCodec: "h264",
-        aFormat: "best",
+        videoQuality: "max",
+        videoCodec: "h264",
+        audioFormat: "best",
         filenameStyle: "basic",
         downloadMode: "auto"
       })
     });
 
-    const contentType = response.headers.get("content-type") || "";
-    const data = contentType.includes("application/json")
-      ? await response.json()
-      : null;
+    const contentType = upstream.headers.get("content-type") || "";
+    const raw = await upstream.text();
+    let data = null;
 
-    if (!response.ok || !data) {
+    if (contentType.includes("application/json")) {
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        data = null;
+      }
+    }
+
+    if (!upstream.ok || !data) {
       return res.status(502).json({
-        error: "The media processing service is unavailable for this link right now."
+        error: `Media processor returned HTTP ${upstream.status}.`
       });
     }
 
