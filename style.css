@@ -1,0 +1,165 @@
+* { box-sizing: border-box; }
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #17181a;
+  background: #f1f3f5;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #ffffff 0, #f1f3f5 55%, #e7e9ec 100%);
+}
+
+.app {
+  width: min(920px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 70px 0 32px;
+}
+
+.hero { text-align: center; }
+
+.badge {
+  display: inline-block;
+  padding: 7px 12px;
+  border: 1px solid #dfe2e6;
+  border-radius: 999px;
+  background: rgba(255,255,255,.8);
+  color: #555b63;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+h1 {
+  margin: 18px 0 10px;
+  font-size: clamp(40px, 8vw, 72px);
+  line-height: .98;
+  letter-spacing: -.055em;
+}
+
+.hero > p {
+  margin: 0 auto 30px;
+  max-width: 560px;
+  color: #646a72;
+  font-size: 17px;
+}
+
+.download-card {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 22px;
+  border: 1px solid #e0e3e7;
+  border-radius: 24px;
+  background: rgba(255,255,255,.92);
+  box-shadow: 0 18px 60px rgba(20, 25, 30, .10);
+  text-align: left;
+}
+
+.download-card > label,
+.options span {
+  display: block;
+  margin-bottom: 8px;
+  color: #50565e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.input-row { display: flex; gap: 10px; }
+
+input, select, button {
+  min-height: 52px;
+  border-radius: 14px;
+  font: inherit;
+}
+
+input, select {
+  border: 1px solid #d8dce1;
+  background: #fafbfc;
+  color: #17181a;
+  outline: none;
+}
+
+input { width: 100%; padding: 0 16px; }
+input:focus, select:focus { border-color: #9aa1aa; box-shadow: 0 0 0 3px rgba(100,110,120,.10); }
+
+button {
+  border: 0;
+  padding: 0 24px;
+  background: #17181a;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+button:hover { background: #303238; }
+button:disabled { opacity: .55; cursor: wait; }
+
+.options { display: flex; gap: 12px; margin-top: 14px; }
+.options label { flex: 1; }
+select { width: 100%; padding: 0 12px; }
+
+.status { min-height: 20px; margin: 14px 2px 0; color: #737980; font-size: 13px; }
+.status.error { color: #a13c3c; }
+.status.success { color: #247148; }
+
+.result {
+  max-width: 760px;
+  margin: 14px auto 0;
+  padding: 18px;
+  border: 1px solid #e0e3e7;
+  border-radius: 18px;
+  background: white;
+  text-align: left;
+}
+.result h2 { margin: 0 0 12px; font-size: 18px; }
+.result p { margin: 10px 0 0; color: #737980; font-size: 13px; word-break: break-word; }
+.hidden { display: none; }
+
+.result-link, .primary-link, .secondary-link {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  text-decoration: none;
+  text-align: center;
+  font-weight: 700;
+}
+.primary-link { background: #17181a; color: white; }
+.secondary-link, .result-link { border: 1px solid #dfe2e6; color: #202328; background: #f7f8f9; }
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 760px;
+  margin: 18px auto 0;
+}
+.features article {
+  padding: 18px;
+  border: 1px solid #e1e4e8;
+  border-radius: 18px;
+  background: rgba(255,255,255,.7);
+}
+.features strong, .features span { display: block; }
+.features strong { margin-bottom: 5px; font-size: 14px; }
+.features span { color: #70767e; font-size: 13px; }
+
+.notice {
+  max-width: 760px;
+  margin: 24px auto 0;
+  color: #858b92;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (max-width: 650px) {
+  .app { padding-top: 38px; }
+  .input-row, .options, .features { grid-template-columns: 1fr; flex-direction: column; }
+  button { width: 100%; }
+  .features { display: grid; }
+  .download-card { padding: 16px; border-radius: 20px; }
+}
