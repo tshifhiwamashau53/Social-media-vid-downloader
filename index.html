@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Simple social media media downloader">
+  <title>MediaDrop — Social Media Downloader</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="badge">MediaDrop</div>
+      <h1>Download your media.</h1>
+      <p>Paste a public media link, choose a format, and download it.</p>
+
+      <form id="downloadForm" class="download-card">
+        <label for="url">Media link</label>
+        <div class="input-row">
+          <input id="url" name="url" type="url" placeholder="Paste a social media link here" autocomplete="off" required>
+          <button id="downloadBtn" type="submit">Download</button>
+        </div>
+
+        <div class="options">
+          <label>
+            <span>Type</span>
+            <select id="mode">
+              <option value="video">Video</option>
+              <option value="audio">Audio</option>
+            </select>
+          </label>
+          <label>
+            <span>Quality</span>
+            <select id="quality">
+              <option value="1080">1080p</option>
+              <option value="720" selected>720p</option>
+              <option value="480">480p</option>
+              <option value="360">360p</option>
+            </select>
+          </label>
+        </div>
+
+        <p id="status" class="status" aria-live="polite"></p>
+      </form>
+
+      <div id="result" class="result hidden"></div>
+    </section>
+
+    <section class="features">
+      <article><strong>Simple</strong><span>One link. One button.</span></article>
+      <article><strong>Mobile friendly</strong><span>Designed for phones first.</span></article>
+      <article><strong>No account</strong><span>No sign-in required by this site.</span></article>
+    </section>
+
+    <p class="notice">Only download media you have permission to save or that is otherwise permitted by the source platform and applicable law.</p>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
