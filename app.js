@@ -1,4 +1,4 @@
-const API_URL = "https://api.cobalt.tools/";
+const API_URL = "https://api.cobalt.tools/api/json";
 
 const form = document.getElementById("downloadForm");
 const urlInput = document.getElementById("url");
@@ -16,7 +16,14 @@ function showError(message) {
   result.innerHTML = "";
   const box = document.createElement("div");
   box.className = "error-box";
-  box.innerHTML = `<strong>Could not prepare this video</strong><p>${message}</p><small>This downloader only works with public media that the processing service supports.</small>`;
+  box.innerHTML = "";
+  const title = document.createElement("strong");
+  title.textContent = "Could not prepare this media";
+  const text = document.createElement("p");
+  text.textContent = message;
+  const note = document.createElement("small");
+  note.textContent = "Use a public media link you have permission to save. Some platforms or private posts may not be available.";
+  box.append(title, text, note);
   result.appendChild(box);
 }
 
@@ -37,7 +44,7 @@ function addVideoPreview(url, filename = "") {
   video.src = url;
   video.setAttribute("aria-label", "Downloaded media preview");
   video.addEventListener("error", () => {
-    setStatus("The media URL was returned, but the browser could not play it.", "error");
+    setStatus("The media was found, but this browser could not play the returned file.", "error");
   });
   preview.appendChild(video);
 
@@ -68,7 +75,7 @@ function showResult(data) {
 
   if (data.status === "picker" && Array.isArray(data.picker)) {
     const item = data.picker.find(item => item.url && /video/i.test(item.type || "")) || data.picker.find(item => item.url);
-    if (!item) throw new Error("No downloadable video was returned.");
+    if (!item) throw new Error("No downloadable media was returned.");
 
     const heading = document.createElement("h2");
     heading.textContent = "Preview your video";
@@ -132,10 +139,10 @@ form.addEventListener("submit", async (event) => {
     const contentType = response.headers.get("content-type") || "";
     const data = contentType.includes("application/json")
       ? await response.json()
-      : { status: "error", error: { code: `Service returned ${response.status} instead of JSON.` } };
+      : { status: "error", error: { code: `Service returned HTTP ${response.status} instead of JSON.` } };
 
     if (!response.ok || data.status === "error") {
-      throw new Error(data.error?.code || `Request failed (${response.status})`);
+      throw new Error(data.error?.code || `Request failed (HTTP ${response.status})`);
     }
 
     showResult(data);
